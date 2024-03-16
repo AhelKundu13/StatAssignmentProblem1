@@ -1,0 +1,90 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.arima.model import ARIMA
+
+# Assuming you have a DataFrame 'data' containing historical data with columns: Date, Open, High, Low, Close, and any additional features
+
+# Assuming 'data' is sorted by Date in ascending order
+data['Next_Open'] = data['Open'].shift(-1)
+data['Next_High'] = data['High'].shift(-1)
+data['Next_Low'] = data['Low'].shift(-1)
+data['Next_Close'] = data['Close'].shift(-1)
+
+# Drop rows with NaN values in the target columns
+data.dropna(subset=['Next_Open', 'Next_High', 'Next_Low', 'Next_Close'], inplace=True)
+
+# Select features and target variable
+X = data[['Open', 'High', 'Low', 'Close']]  # Add additional features as needed
+y_open = data['Next_Open']
+y_high = data['Next_High']
+y_low = data['Next_Low']
+y_close = data['Next_Close']
+
+# Split the data into training and test sets
+split_ratio = 0.8
+split_index = int(len(data) * split_ratio)
+X_train, X_test = X[:split_index], X[split_index:]
+y_open_train, y_open_test = y_open[:split_index], y_open[split_index:]
+y_high_train, y_high_test = y_high[:split_index], y_high[split_index:]
+y_low_train, y_low_test = y_low[:split_index], y_low[split_index:]
+y_close_train, y_close_test = y_close[:split_index], y_close[split_index:]
+
+# Exponential smoothing
+model_open = ExponentialSmoothing(y_open_train, trend='add', seasonal='add', seasonal_periods=7)
+model_high = ExponentialSmoothing(y_high_train, trend='add', seasonal='add', seasonal_periods=7)
+model_low = ExponentialSmoothing(y_low_train, trend='add', seasonal='add', seasonal_periods=7)
+model_close = ExponentialSmoothing(y_close_train, trend='add', seasonal='add', seasonal_periods=7)
+
+# AR model
+ar_order = 7  # Order of the autoregressive model
+model_open_ar = AutoReg(y_open_train, lags=ar_order).fit()
+model_high_ar = AutoReg(y_high_train, lags=ar_order).fit()
+model_low_ar = AutoReg(y_low_train, lags=ar_order).fit()
+model_close_ar = AutoReg(y_close_train, lags=ar_order).fit()
+
+# MA model
+ma_order = 7  # Order of the moving average model
+model_open_ma = ARIMA(y_open_train, order=(0, 0, ma_order)).fit()
+model_high_ma = ARIMA(y_high_train, order=(0, 0, ma_order)).fit()
+model_low_ma = ARIMA(y_low_train, order=(0, 0, ma_order)).fit()
+model_close_ma = ARIMA(y_close_train, order=(0, 0, ma_order)).fit()
+
+# Make predictions
+y_open_pred_exp = model_open.forecast(len(y_open_test))
+y_high_pred_exp = model_high.forecast(len(y_high_test))
+y_low_pred_exp = model_low.forecast(len(y_low_test))
+y_close_pred_exp = model_close.forecast(len(y_close_test))
+
+y_open_pred_ar = model_open_ar.predict(start=len(y_open_train), end=len(y_open_train)+len(y_open_test)-1)
+y_high_pred_ar = model_high_ar.predict(start=len(y_high_train), end=len(y_high_train)+len(y_high_test)-1)
+y_low_pred_ar = model_low_ar.predict(start=len(y_low_train), end=len(y_low_train)+len(y_low_test)-1)
+y_close_pred_ar = model_close_ar.predict(start=len(y_close_train), end=len(y_close_train)+len(y_close_test)-1)
+
+y_open_pred_ma = model_open_ma.predict(start=len(y_open_train), end=len(y_open_train)+len(y_open_test)-1)
+y_high_pred_ma = model_high_ma.predict(start=len(y_high_train), end=len(y_high_train)+len(y_high_test)-1)
+y_low_pred_ma = model_low_ma.predict(start=len(y_low_train), end=len(y_low_train)+len(y_low_test)-1)
+y_close_pred_ma = model_close_ma.predict(start=len(y_close_train), end=len(y_close_train)+len(y_close_test)-1)
+
+# Evaluate the models
+mse_open_exp = np.mean((y_open_test - y_open_pred_exp)**2)
+mse_high_exp = np.mean((y_high_test - y_high_pred_exp)**2)
+mse_low_exp = np.mean((y_low_test - y_low_pred_exp)**2)
+mse_close_exp = np.mean((y_close_test - y_close_pred_exp)**2)
+
+mse_open_ar = np.mean((y_open_test - y_open_pred_ar)**2)
+mse_high_ar = np.mean((y_high_test - y_high_pred_ar)**2)
+mse_low_ar = np.mean((y_low_test - y_low_pred_ar)**2)
+mse_close_ar = np.mean((y_close_test - y_close_pred_ar)**2)
+
+mse_open_ma = np.mean((y_open_test - y_open_pred_ma)**2)
+mse_high_ma = np.mean((y_high_test - y_high_pred_ma)**2)
+mse_low_ma = np.mean((y_low_test - y_low_pred_ma)**2)
+mse_close_ma = np.mean((y_close_test - y_close_pred_ma)**2)
+
+print(f'MSE Open (Exp. Smoothing): {mse_open_exp}, MSE Open (AR): {mse_open_ar}, MSE Open (MA): {mse_open_ma}')
+print(f'MSE High (Exp. Smoothing): {mse_high_exp}, MSE High (AR): {mse_high_ar}, MSE High (MA): {mse_high_ma}')
+print(f'MSE Low (Exp. Smoothing): {mse_low_exp}, MSE Low (AR): {mse_low_ar}, MSE Low (MA): {mse_low_ma}')
+print(f'MSE Close (Exp. Smoothing): {mse_close_exp}, MSE Close (AR): {mse_close_ar}, MSE Close (MA): {mse_close_ma}')
