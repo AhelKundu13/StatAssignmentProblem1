@@ -1,0 +1,60 @@
+# using the  Reliance Industries Ltd. (RIL) to scrape the latest news for Reliance Industries Ltd. (RIL) in the last 24 hours from Google News
+
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_news():
+    base_url = "https://www.google.com/search?q=Reliance+Industries+Ltd.+news&tbm=nws&tbs=qdr:d"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(base_url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    news_list = []
+    news_elements = soup.find_all("div", class_="ZINbbc xpd O9g5cc uUPGi")
+    for news_element in news_elements:
+        link_element = news_element.find("a")
+        if link_element:
+            source = news_element.find("span", class_="xQ82C e8fRJf").get_text()
+            url = link_element["href"]
+            title = link_element.get_text()
+            news_list.append({"source": source, "text": title, "url": url})
+
+    return news_list
+
+# Example usage
+if __name__ == "__main__":
+    news = scrape_news()
+    for item in news:
+        print(item)
+This code fetches the latest news about RIL from Google News within the last 24 hours and extracts the source, text (title), and URL for each news item
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_news():
+    base_url = "https://www.google.com/search?q=Reliance+Industries+Ltd.+news&tbm=nws&tbs=qdr:d"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(base_url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    news_list = []
+    news_elements = soup.find_all("div", class_="ZINbbc xpd O9g5cc uUPGi")
+    for news_element in news_elements:
+        link_element = news_element.find("a")
+        if link_element:
+            source = news_element.find("span", class_="xQ82C e8fRJf").get_text()
+            url = link_element["href"]
+            title = link_element.get_text()
+            news_list.append({"source": source, "text": title, "url": url})
+
+    return news_list
+
+# The particular usage
+
+if __name__ == "__main__":
+    news = scrape_news()
+    for item in news:
+        print(item)
