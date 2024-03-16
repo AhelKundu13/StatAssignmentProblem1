@@ -1,0 +1,78 @@
+# 1 doing the code in Python that is the platform
+import json
+import pdfplumber
+from textblob import TextBlob
+from pathlib import Path
+from typing import Dict, Any
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    with pdfplumber.open(pdf_path) as pdf:
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text()
+    return text
+
+def preprocess_text(text: str) -> str:
+    # Implement text preprocessing as needed
+    return text
+
+def analyze_sentiment(text: str) -> str:
+    blob = TextBlob(text)
+    sentiment = "positive" if blob.sentiment.polarity > 0 else "negative"
+    return sentiment
+
+def analyze_revenue_change(financial_data: Dict[str, Any], transcript_data: Dict[str, Any]) -> str:
+    # Implement revenue change analysis based on financial data and transcripts
+    return "increase"  # Placeholder
+
+def main():
+    zip_file_path = "path_to_zip_file"
+    output_json = {}
+
+    with pdfplumber.open(zip_file_path) as pdf:
+        for file in pdf.files:
+            if "transcript" in file.lower():
+                transcript_text = extract_text_from_pdf(file)
+                transcript_text = preprocess_text(transcript_text)
+                sentiment = analyze_sentiment(transcript_text)
+                financial_file = file.replace("transcript", "financial")
+                financial_text = extract_text_from_pdf(financial_file)
+                financial_text = preprocess_text(financial_text)
+                revenue_change = analyze_revenue_change(financial_text, transcript_text)
+                output_json[file] = {
+                    "sentiment": sentiment,
+                    "revenue_change": revenue_change
+                }
+
+    with open('output.json', 'w') as f:
+        json.dump(output_json, f, indent=4)
+
+if __name__ == "__main__":
+    main()
+
+# 2 The prompt is 
+
+The following transcript contains statements made by speakers in a meeting. Your task is to analyze the sentiment of each speaker's statement and correlate it with the financial data for the same period. Specifically, you need to identify whether the sentiment expressed by each speaker is positive or negative, and then validate that sentiment with the corresponding financial data for the quarter. If the sentiment is positive and the revenue from operations has increased, or if the sentiment is negative and the revenue has decreased, consider it a match. Output a JSON structure that mentions which speaker's statement led to the sentiment conclusion.
+
+Transcript:
+{transcript_text}
+
+Financial Data:
+{financial_data}
+
+Robbie Singh:: "We do not specifically look at it like too much on what is the competitive advantage or what is
+not. India is going to be a very significant data market and it will have lot more than just 1 or 2
+players. We would like to be one of the leading players and the full-service data center, and the
+various data center, edge data centers etc., so in each aspect we would like to be a significant
+player. So, currently, we have order book, other than the operating order book, of over 110
+Megawatt of hyperscalers and we expect that to rise dramatically over the next couple of years.
+We would be well on the way to completing 1 gigawatt before the end of this decade."
+Speaker 2: "And lastly, sir what are our CAPEX plans especially for green hydrogen, airports and data center
+segments for the next 3 years?"
+Speaker 3: "Overall in the longer term, the CAPEX plans don’t alter for the asset like for green hydrogen
+full 3-million-ton facility, approximately $50 billion as we have outlined in previous year, so
+that plan continues forward as it is. Also this year, we would touch just about between 300
+million to 400 million and then it rapidly starts rising from next year and the year after. On the airport side, we will have capex this year just about US $1.1 billion, all of this just to clarify we
+are assuming Rs.80 to a dollar rate, adjust for that, so about US $1.1 billion this year would be
+the CAPEX on airport. It will broadly remain in that range for the next year then there will be
+decline, once we complete the first phase of our development plan in airports."
